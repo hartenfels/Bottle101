@@ -25,6 +25,12 @@ uuids = model.uuids()
 def err(text):
     return {'messages' : [{'type' : 'error', 'text' : text}]}
 
+def object_from(key):
+    id  = getattr(request.params, key, None)
+    if not id : return None, err('No ID given.')
+    obj = uuids.get(id)
+    if not obj: return None, err('{0} does not exist'.format(id))
+    return obj, None
 
 @get('/')
 def index():
@@ -46,25 +52,29 @@ def tree():
 
 @post('/cut')
 def cut():
-    obj       = uuids[request.params.id]
+    obj, error = object_from('id')
+    if not obj: return error
     commands  = []
     for employee in obj.cut():
         commands.append({'type' : 'edit', 'node' : employee.to_json()})
     return {'commands' : commands}
 
 @post('/depth')
-def total():
-    obj = uuids[request.params.id]
+def depth():
+    obj, error = object_from('id')
+    if not obj: return error
     return {'messages' : 'Depth: {0}'.format(obj.depth())}
 
 @post('/median')
-def total():
-    obj = uuids[request.params.id]
+def median():
+    obj, error = object_from('id')
+    if not obj: return error
     return {'messages' : 'Median: {0}'.format(obj.median())}
 
 @post('/total')
 def total():
-    obj = uuids[request.params.id]
+    obj, error = object_from('id')
+    if not obj: return error
     return {'messages' : 'Total: {0}'.format(obj.total())}
 
 
@@ -77,7 +87,8 @@ def field_values(obj, fields):
     return values
 
 def get_form(action):
-    obj    = uuids[request.params.id]
+    obj, error = object_from('id')
+    if not obj: return error
     type   = request.params.type if action == 'add' else obj.type_name()
     label  = forms[type]['label']
     fields = forms[type]['fields']
@@ -99,6 +110,45 @@ def edit():
     return get_form('edit')
 
 
+def save_add(type, id, result):
+    if type == 'company':
+        parent_id   = 'root'
+        parent_list = model.children
+    else:
+        tmp = uuids[id]
+        if type not in tmp.child_types():
+            return err("{0} can't adopt {1}.".format(id, type))
+        parent_id   = tmp.id
+        parent_list = tmp.children
+
+    node = globals()[forms[type]['class']](**result)
+    uuids[node.id] = node
+    parent_list.append(node)
+
+    return {
+        'form'     : {'valid' : True},
+        'messages' : 'Added {0}'.format(result['text']),
+        'commands' : {
+            'type'   : 'add',
+            'parent' : parent_id,
+            'node'   : node.to_json(),
+        },
+    }
+
+def save_edit(type, id, result):
+    node = uuids[id]
+    if node.type_name() != type:
+        return err('{0} is not a {1}'.format(id, type))
+
+    for k, v in result.items():
+        setattr(node, k, v)
+
+    return {
+        'form'     : {'valid' : True},
+        'messages' : 'Modified {0}'.format(result['text']),
+        'commands' : {'type' : 'edit', 'node' : node.to_json()},
+    }
+
 @post('/save/<action>/<type>/<id>')
 def save(action, type, id):
     valid, result = validator.validate(type, request.params)
@@ -111,53 +161,22 @@ def save(action, type, id):
             'text' : 'The form data entered was invalid.',
         }
     }
-
-    if action == 'add':
-        if type == 'company':
-            parent_id   = 'root'
-            parent_list = model.children
-        else:
-            tmp = uuids[id]
-            if type not in tmp.child_types():
-                return err("{0} can't adopt {1}.".format(id, type))
-            parent_id   = tmp.id
-            parent_list = tmp.children
-
-        node = globals()[forms[type]['class']](**result)
-        uuids[node.id] = node
-        parent_list.append(node)
-
-        return {
-            'form'     : {'valid' : True},
-            'messages' : 'Added {0}'.format(result['text']),
-            'commands' : {
-                'type'   : 'add',
-                'parent' : parent_id,
-                'node'   : node.to_json(),
-            },
-        }
-    else:
-        node = uuids[id]
-        if node.type_name() != type:
-            return err('{0} is not a {1}'.format(id, type))
-
-        for k, v in result.items():
-            setattr(node, k, v)
-
-        return {
-            'form'     : {'valid' : True},
-            'messages' : 'Modified {0}'.format(result['text']),
-            'commands' : {'type' : 'edit', 'node' : node.to_json()},
-        }
+    if action == 'add' :
+        return  save_add(type, id, result)
+    if action == 'edit':
+        return save_edit(type, id, result)
+    return err('Expected action add or edit, but got {0}.'.format(action))
 
 
 def delete_uuids(obj):
     del uuids[obj.id]
-    for child in obj.children: delete_uuids(child)
+    for child in obj.children:
+        delete_uuids(child)
 
 @post('/delete')
 def delete():
-    obj = uuids[request.params.id]
+    obj, error = object_from('id')
+    if not obj: return error
     if obj.type_name() == 'root':
         return err("Can't delete root.")
     model.remove(obj)
@@ -167,8 +186,10 @@ def delete():
 
 @post('/restructure')
 def restructure():
-    source = uuids[request.params.id    ]
-    target = uuids[request.params.target]
+    source, error = object_from('id')
+    if not source: return error
+    target, error = object_from('target')
+    if not target: return error
 
     if source.type_name() not in target.child_types():
         return err('Restructure: Incompatible types.')

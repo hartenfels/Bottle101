@@ -1,21 +1,18 @@
 class Validator:
     def check_str(val):
         val = val.strip()
-        return (1, val) if val else (0, "This can't be empty")
+        if not val:
+            raise ValueError("This can't be empty.")
+        return val
 
     def check_num(val):
-        try:
-            return (1, float(val))
-        except ValueError:
-            return (0, "That's not a number.")
+        return float(val)
 
     def check_unsigned_num(val):
-        try:
-            val = float(val)
-            if val < 0: raise ValueError
-            return (1, val)
-        except ValueError:
-            return (0, "That's not an unsigned number.")
+        val = float(val)
+        if val < 0:
+            raise ValueError("That's not an unsigned number.")
+        return val
 
     validators = {
         'Str'         : check_str,
@@ -28,16 +25,13 @@ class Validator:
 
     def validate(self, what, fields):
         form    = self.forms[what]
-        valid   = 1
         results = {}
         errors  = {}
         for f in form['fields']:
-            key     = f['name']
-            ok, res = Validator.validators[f['type']](getattr(fields, key))
-            valid   = valid and ok
-            if valid:
-                results[key] = res
-            else:
-                results      = errors
-                errors[key]  = res
-        return valid, results
+            key = f['name']
+            val = getattr(fields, key)
+            try:
+                results[key] = Validator.validators[f['type']](val)
+            except ValueError as e:
+                errors [key] = str(e)
+        return not errors, errors if errors else results
