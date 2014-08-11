@@ -1,0 +1,92 @@
+method :
+    name        : ajax
+    tree_url    : /tree
+    action_urls :
+        company     : /add
+        department  : /add
+        employee    : /add
+        cut         : /cut
+        depth       : /depth
+        median      : /median
+        total       : /total
+        edit        : /edit
+        delete      : /delete
+        restructure : /restructure
+types :
+    root       :
+        icon     : /public/plus.png
+        children :
+            - company
+        actions  :
+            - company
+            - 
+            - cut
+            - depth
+            - median
+            - total
+    company    :
+        icon     : /public/comp_icon.png
+        children :
+            - department
+        actions  :
+            - company
+            - department
+            - 
+            - cut
+            - depth
+            - median
+            - total
+            - 
+            - edit
+            - delete
+    department :
+        icon     : /public/dept_icon.png
+        children :
+            - department
+            - employee
+        actions  :
+            - company
+            - department
+            - employee
+            - 
+            - cut
+            - depth
+            - median
+            - total
+            - 
+            - edit
+            - delete
+    employee   :
+        icon     : /public/empl_icon.png
+        printf   :
+            format : "%s, %s, $%.2f"
+            args   :
+                - text
+                - address
+                - salary
+        actions  :
+            - company
+            - 
+            - cut
+            - depth
+            - median
+            - total
+            - 
+            - edit
+            - delete
+actions :
+    company    :
+        text : Create Company
+        icon : /public/comp_add.png
+    department :
+        text : Add Department
+        icon : /public/dept_add.png
+    employee   :
+        text : Add Employee
+        icon : /public/empl_add.png
+    cut        : Cut
+    depth      : Depth
+    median     : Median
+    total      : Total
+    edit       : Edit
+    delete     : Delete

@@ -1,0 +1,27 @@
+company    :
+    label  : Company
+    class  : Company
+    fields :
+        - name  : text
+          label : Name
+          type  : Str
+department :
+    label  : Department
+    class  : Department
+    fields :
+        - name  : text
+          label : Name
+          type  : Str
+employee   :
+    label  : Employee
+    class  : Employee
+    fields :
+        - name  : text
+          label : Name
+          type  : Str
+        - name  : address
+          label : Address
+          type  : Str
+        - name  : salary
+          label : Salary
+          type  : UnsignedNum
