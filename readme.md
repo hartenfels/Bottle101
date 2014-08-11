@@ -1,4 +1,4 @@
-Implementation for [101 Companies](http://101companies.org/wiki/Contribution:bottle) for details.
+Implementation for [101Companies](http://101companies.org), see [http://101companies.org/wiki/Contribution:bottle](http://101companies.org/wiki/Contribution:bottle) for details.
 
 Requirements
 ============
@@ -15,4 +15,4 @@ To ensure everything works, `cd` into this project's folder and run `test101.py`
 Bottling
 ========
 
-To run the most interesting feature of this contribution, namely the web UI, once again `cd` into the project's folder, run `bottle101.py` and then point your browser to [http://localhost:3000/], with JavaScript enabled.
+To run the most interesting feature of this contribution, namely the web UI, once again `cd` into the project's folder, run `bottle101.py` and then point your browser to [http://localhost:3000/](http://localhost:3000/), with JavaScript enabled.
